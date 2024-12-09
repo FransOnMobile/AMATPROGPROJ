@@ -32,7 +32,7 @@ void sortNotesByTaskNo();
 void sortNotesByPriority();
 void editNote();
 void deleteNote();
-void loadNotes(const char *filename);
+int loadNotes(const char *filename);
 
 // Function for prompting user to add new notes
 // Notes are saved to local memory
@@ -413,11 +413,11 @@ void saveNotes(const char* filename) {
 }
 
 // Function for loading notes in file to local memory
-void loadNotes(const char* filename) {
+int loadNotes(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
         printf("*No file found to load notes from!*\n");
-        return;
+        return 0;
     }
 
     // loop for clearing empty values in struct before loading
@@ -449,6 +449,7 @@ void loadNotes(const char* filename) {
 
     fclose(file);
     printf("*Notes loaded from file successfully!*\n");
+    return 1;
 }
 
 // Main function
@@ -456,7 +457,8 @@ int main() {
     char filename[] = "saved_notes.txt";
     int choice;
     
-    loadNotes(filename);
+    if(!loadNotes(filename))
+        return 0;
     
     do {
         printf("\n--- Note-Taking Application ---\n");
