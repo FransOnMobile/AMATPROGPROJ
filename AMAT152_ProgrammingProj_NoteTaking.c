@@ -2,18 +2,21 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define MAX_NOTE_NAME 100
 #define MAX_NOTE_LENGTH 1000
 #define MAX_CATEGORY_LENGTH 100
 #define MAX_DATE_LENGTH 20
 #define MAX_NOTES 100
 
 struct Note {
-    char name[100];
+    int noteID;
+    char name[MAX_NOTE_NAME];
     char content[MAX_NOTE_LENGTH];
     char category[MAX_CATEGORY_LENGTH];
     int priority;
     char date[MAX_DATE_LENGTH];
 };
+
 
 struct Note notes[MAX_NOTES];
 int noteCount = 0;
@@ -39,30 +42,45 @@ void addNote() {
         return;
     }
 
+    notes[noteCount].noteID = noteCount + 1; 
     printf("\nAdding a new note:\n");
-    printf("Enter task name (max 100 chars): ");
+
+    // name
+    printf("Enter task name (max 15 chars): ");
     scanf(" %[^\n]", notes[noteCount].name);
     if (strlen(notes[noteCount].name) > 15)
-        notes[noteCount].name[15] = '\0'; 
+        notes[noteCount].name[15] = '\0';
 
-    printf("Enter description (max 1000 chars): ");
+    // description
+    printf("Enter description (max 50 chars): ");
     scanf(" %[^\n]", notes[noteCount].content);
     if (strlen(notes[noteCount].content) > 50)
-        notes[noteCount].content[50] = '\0';
+        notes[noteCount].content[50] = '\0'; 
 
-    printf("Enter category (Work, School, etc.): ");
+    // category
+    printf("Enter category (Work, School, etc., max 10 chars): ");
     scanf(" %[^\n]", notes[noteCount].category);
     if (strlen(notes[noteCount].category) > 10)
-        notes[noteCount].category[10] = '\0'; 
+        notes[noteCount].category[10] = '\0';
 
+    // priority
     printf("Enter priority (1: High, 2: Medium, 3: Low): ");
     scanf("%d", &notes[noteCount].priority);
+    if (notes[noteCount].priority < 1 || notes[noteCount].priority > 3) {
+        printf("*Invalid priority! Priority must be between 1 and 3. Note not added.*\n");
+        return;
+    }
 
+    // date
     printf("Enter date (YYYY-MM-DD): ");
     scanf("%s", notes[noteCount].date);
+    if (strlen(notes[noteCount].date) != 10 || notes[noteCount].date[4] != '-' || notes[noteCount].date[7] != '-') {
+        printf("*Invalid date format! Use YYYY-MM-DD. Note not added.*\n");
+        return;
+    }
 
     noteCount++;
-    printf("*Note added successfully!*\n");
+    printf("*Note added successfully with ID %d!*\n", notes[noteCount - 1].noteID);
 }
 
 // Function for showing user a menu for modifying notes
@@ -113,12 +131,12 @@ void viewAllNotes() {
 
     for (int i = 0; i < noteCount; i++) {
         printf("| %-5d | %-15s | %-50s | %-10s | %-8d | %-10s |\n",
-               i + 1,
-               notes[i].name,
-               notes[i].content,
-               notes[i].category,
-               notes[i].priority,
-               notes[i].date);
+            notes[i].noteID,
+            notes[i].name,
+            notes[i].content,
+            notes[i].category,
+            notes[i].priority,
+            notes[i].date);
         printf("---------------------------------------------------------------------------------------------------------------------\n");
     }
 }
@@ -201,12 +219,12 @@ void sortNotesByTaskName(struct Note *notes, int n, int index) {
 // Function for sorting notes by task number lexicographically
 void sortNotesByTaskNo(struct Note *notes, int n, int index) {
     if (index >= n - 1)
-        return; 
+        return;
 
-    // finds index of smallest task num
+    // finds index of smallest num
     int minIndex = index;
     for (int i = index + 1; i < n; i++) {
-        if (i < minIndex)
+        if (notes[i].noteID < notes[minIndex].noteID)
             minIndex = i;
     }
 
@@ -219,6 +237,7 @@ void sortNotesByTaskNo(struct Note *notes, int n, int index) {
 
     sortNotesByTaskNo(notes, n, index + 1);
 }
+
 
 // Function for sorting notes by priority number (increasing order)
 void sortNotesByPriority(struct Note *notes, int n, int index) {
@@ -278,55 +297,96 @@ void sortNotesMenu() {
 
 // Function for editing notes based on note number
 void editNote() {
-    int index;
-    printf("Enter the note number to edit: ");
-    scanf("%d", &index);
+    int noteID;
+    printf("Enter the note ID to edit: ");
+    scanf("%d", &noteID);
 
-    if (index < 1 || index > noteCount) {
-        printf("*Invalid note number!*\n");
+    // finding the note based on note number
+    int index = -1;
+    for (int i = 0; i < noteCount; i++) {
+        if (notes[i].noteID == noteID) {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1) {
+        printf("*Invalid note ID!*\n");
         return;
     }
 
-    index--;
+    printf("Editing Note %d:\n", notes[index].noteID);
 
-    printf("Editing Note %d:\n", index + 1);
-    printf("Enter new task name: ");
+    // task Name
+    printf("Enter new task name (max 15 chars): ");
     scanf(" %[^\n]", notes[index].name);
+    if (strlen(notes[index].name) > 15) {
+        notes[index].name[15] = '\0';
+        printf("*Task name too long, truncated to fit the table.*\n");
+    }
 
-    printf("Enter new description: ");
+    // description
+    printf("Enter new description (max 50 chars): ");
     scanf(" %[^\n]", notes[index].content);
+    if (strlen(notes[index].content) > 50) {
+        notes[index].content[50] = '\0';
+        printf("*Description too long, truncated to fit the table.*\n");
+    }
 
-    printf("Enter new category (Work, School, etc.): ");
+    // category
+    printf("Enter new category (Work, School, etc., max 10 chars): ");
     scanf(" %[^\n]", notes[index].category);
+    if (strlen(notes[index].category) > 10) {
+        notes[index].category[10] = '\0';
+        printf("*Category too long, truncated to fit the table.*\n");
+    }
 
+    // priority
     printf("Enter new priority (1: High, 2: Medium, 3: Low): ");
     scanf("%d", &notes[index].priority);
+    if (notes[index].priority < 1 || notes[index].priority > 3) {
+        printf("*Invalid priority! Priority must be between 1 and 3. Changes not saved.*\n");
+        return;
+    }
 
+    // date
     printf("Enter new date (YYYY-MM-DD): ");
     scanf("%s", notes[index].date);
+    if (strlen(notes[index].date) != 10 || notes[index].date[4] != '-' || notes[index].date[7] != '-') {
+        printf("*Invalid date format! Use YYYY-MM-DD. Changes not saved.*\n");
+        return;
+    }
 
     printf("*Note updated successfully!*\n");
 }
 
+
 // Function for deleting notes based on note number
 void deleteNote() {
-    int index;
-    printf("Enter the note number to delete: ");
-    scanf("%d", &index);
+    int noteID;
+    printf("Enter the note ID to delete: ");
+    scanf("%d", &noteID);
 
-    if (index < 1 || index > noteCount) {
-        printf("*Invalid note number!*\n");
-        return;
+    // finding the note based on note number
+    int index = -1;
+    for (int i = 0; i < noteCount; i++) {
+        if (notes[i].noteID == noteID) {
+            index = i;
+            break;
+        }
     }
 
-    index--;
+    if (index == -1) {
+        printf("*Invalid note ID!*\n");
+        return;
+    }
 
     // shift all notes after the deleted one to fill the gap
     for (int i = index; i < noteCount - 1; i++) {
         notes[i] = notes[i + 1];
     }
-    noteCount--;
 
+    noteCount--;
     printf("*Note deleted successfully!*\n");
 }
 
@@ -339,12 +399,13 @@ void saveNotes(const char* filename) {
     }
 
     for (int i = 0; i < noteCount; i++) {
-        fprintf(file, "%s|%s|%s|%d|%s\n", 
-                notes[i].name, 
-                notes[i].content, 
-                notes[i].category, 
-                notes[i].priority, 
-                notes[i].date);
+        fprintf(file, "%d|%s|%s|%s|%d|%s\n",
+            notes[i].noteID,
+            notes[i].name,
+            notes[i].content,
+            notes[i].category,
+            notes[i].priority,
+            notes[i].date);
     }
 
     fclose(file);
@@ -359,14 +420,25 @@ void loadNotes(const char* filename) {
         return;
     }
 
+    // loop for clearing empty values in struct before loading
+    for (int i = 0; i < MAX_NOTES; i++) {
+        notes[i].noteID = 0;
+        notes[i].priority = 0;
+        strcpy(notes[i].name, "");
+        strcpy(notes[i].content, "");
+        strcpy(notes[i].category, "");
+        strcpy(notes[i].date, "");
+    }
+
     noteCount = 0; // reset note count before loading
 
-    while (fscanf(file, "%[^|]|%[^|]|%[^|]|%d|%[^\n]\n", 
-                  notes[noteCount].name, 
-                  notes[noteCount].content, 
-                  notes[noteCount].category, 
-                  &notes[noteCount].priority, 
-                  notes[noteCount].date) != EOF) {
+    while (fscanf(file, "%d|%[^|]|%[^|]|%[^|]|%d|%[^\n]\n",
+              &notes[noteCount].noteID,
+              notes[noteCount].name,
+              notes[noteCount].content,
+              notes[noteCount].category,
+              &notes[noteCount].priority,
+              notes[noteCount].date) != EOF) {
         noteCount++;
         
         if (noteCount >= MAX_NOTES) {
